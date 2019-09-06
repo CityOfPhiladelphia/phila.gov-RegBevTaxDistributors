@@ -287,12 +287,11 @@ export default {
 
     toLink(s) {
       var prefix = 'http://';
-      if (s.substr(0, prefix.length) !== prefix)
-        {
-          return s = prefix + s;
-        }
+      if (s.substr(0, prefix.length) !== prefix) {
+        return s = prefix + s;
       }
     },
+  },
 };
 </script>
 
