@@ -41,8 +41,7 @@
       class="table-container"
     >
       <table
-        v-if="filteredList.length"
-       
+        v-if="filteredDistributors.length"
       >
         <thead
           class="center"
@@ -51,47 +50,77 @@
           data-btm-anchor="page:bottom"
         >
           <tr>
-            <th>
+            <th
+              class="dist-name"
+            >
               <span>Distributor Name</span>
             </th>
-            <th>
+            <th
+              class="dist-address"
+            >
               <span>Address</span>
             </th>
-            <th>
-              <span>Phone</span>
-            </th>
-            <th>
-              <span>Website</span>
+            <th
+              class="dist-contact"
+            >
+              <span>Contact Information</span>
             </th>
           </tr>
         </thead>
         <!-- <tbody> -->
         <paginate
-          name="filteredList"
-          :list="filteredList"
+          ref="paginator"
+          name="filteredDistributors"
+          :list="filteredDistributors"
           class="paginate-list"
           tag="tbody"
           :per="50"
         >
           <tr
-            v-for="distributor in paginated('filteredList')"
+            v-for="distributor in paginated('filteredDistributors')"
             :key="distributor.cartodb_id"
           >
-            <td>
-              {{ distributor.doing_business_as_name }}
+            <td
+              class="business-name"
+            >
+              {{ distributor.doing_business_as_name | upperCase }}
             </td>
             <td>
-              {{ distributor.street_address }}
-              {{ distributor.city }}, {{ distributor.state }}
-              {{ distributor.zip_code }}
+              <a
+                v-if="distributor.street_address"
+                :href="'https://www.google.com/maps/search/?api=1&query=' + distributor.street_address + ' ' + distributor.zip_code"
+                target="_blank"
+                class="external"
+              >
+                {{ distributor.street_address }} <br>
+                {{ distributor.city }}, {{ distributor.state }}
+                {{ distributor.zip_code }}
+              </a>
             </td>
             <td>
-              {{ distributor.phone_number }}
+              <a
+                :href="'tel:' + distributor.phone_number"
+                class="telephone"
+              >
+                {{ distributor.phone_number | phoneDisplay }}
+              </a>
               <!-- check to see if there is an extension -->
-               x{{ distributor.phone_extension }}
-            </td>
-            <td>
-              {{ distributor.website }}
+              <span 
+                v-if="distributor.phone_extension !== '0' && distributor.phone_extension "
+              >
+                <b>ext. {{ distributor.phone_extension }}</b>
+              </span>
+              <br>
+              <br>
+              <!-- culls for email addresses  -->
+              <a 
+                v-if="distributor.website !== null && !distributor.website.includes('@')" 
+                target="_blank" 
+                :href="toLink(distributor.website)"
+                class="external"
+              > 
+                {{ toLink(distributor.website) }}
+              </a>
             </td>
           </tr>
         </paginate>
@@ -100,8 +129,8 @@
       <div class="app-pages">
         <p> Showing <b> {{ numberOf }} </b> distributors </p>
         <paginate-links
-          v-show="!loading && !emptyResponse && !failure && displayPaginate"
-          for="filteredList"
+          v-show="!loading && !emptyResponse && !failure"
+          for="filteredDistributors"
           :async="true"
           :limit="3"
           :show-step-links="true"
@@ -127,8 +156,8 @@ import VueFuse from "vue-fuse";
 Vue.use(VuePaginate);
 Vue.use(VueFuse);
 
-const endpoint =
-  "https://phl.carto.com/api/v2/sql?q=SELECT%20*%20FROM%20beverage_tax_registration_data";
+const endpoint = "https://phl.carto.com/api/v2/sql";
+const query = "?q=SELECT%20*%20FROM%20beverage_tax_registration_data";
 
 export default {
   name: "PhillyBevTaxDistributors",
@@ -136,19 +165,32 @@ export default {
 
   },
   filters: {
-   
+    'phoneDisplay' : function(val) {
+      if(val !== null) {
+        return val.replace(/[^0-9]/g, '')
+          .replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+      }
+    },
+
+    'upperCase': function(val) {
+      if (val) {
+        return val.toUpperCase().trim();
+      }
+    },
   },
   data: function() {
     return {
-      distributorsList : [],
-      filteredList: [],
+      distributors : [],
+      filteredDistributors: [],
+      sortedDistributors: [],
       loading : true,
       emptyResponse : false,
       failure : false,
       displayPaginate: true,
       search: '',
       searchOptions: {
-        threshold: 0.3,
+        shouldSort: false,
+        threshold: 0.2,
         keys: [
           "doing_business_as_name",
           "street_address",
@@ -158,12 +200,12 @@ export default {
           "phone_number",
         ],
       },
-      paginate: [ "filteredList" ],
+      paginate: [ "filteredDistributors" ],
     };
   },
   computed: { 
     numberOf: function() {
-      return this.filteredList.length;
+      return this.filteredDistributors.length;
     },
   },
 
@@ -180,10 +222,22 @@ export default {
   methods: {
     getDistributors: function() {
       {
-        axios.get(endpoint)
+        axios.get(endpoint+query)
           .then(response => {
-            this.distributorsList = response.data.rows;
-            this.filteredList = this.distributorsList;
+            this.distributors = response.data.rows;
+
+            //sort alphabetically
+            this.sortedDistributors = this.distributors.sort(function(a, b){
+              if(a.doing_business_as_name.toLowerCase() < b.doing_business_as_name.toLowerCase()) {
+                return -1; 
+              }
+              if(a.doing_business_as_name.toLowerCase() > b.doing_business_as_name.toLowerCase()) {
+                return 1; 
+              }
+              return 0;
+            });
+
+            this.filteredDistributors = this.sortedDistributors;
             this.loading = false;
           }).catch(e => {
             window.console.log(e);
@@ -193,26 +247,35 @@ export default {
       }
     },
 
-    filter: async function() {
 
+    filterSearch: function() {
       if (this.search !== '') { // there is nothing in the search bar -> return everything in filteredPosts
-        this.filteredList = [];
+        this.filteredDistributors = [];
         
-        this.$search(this.search, this.distributorsList, this.searchOptions).then(posts => {
-          this.filteredList = posts;
+        this.$search(this.search, this.distributors, this.searchOptions).then(posts => {
+          this.filteredDistributors = posts;
         });
     
       } else {
-        this.filteredList = this.distributorsList;
+        this.filteredDistributors = this.sortedDistributors;
     
       }
 
-      // await 
+    },
+
+    filter: async function() {
+
+      await this.filterSearch();
+     
+      await this.checkEmpty();
+      if (this.$refs.paginator) {
+        this.$refs.paginator.goToPage(1);
+      }
     },
 
     checkEmpty: function() {
-      this.emptyResponse = (this.filteredList.length === 0 ? true : false);
-      this.displayPaginate = (this.filteredList.length >= 50) ? true : false;
+      this.emptyResponse = (this.filteredDistributors.length === 0 ? true : false);
+      // this.displayPaginate = (this.filteredDistributors.length >= 50) ? true : false;
     },
     
     scrollToTop : function () {
@@ -221,7 +284,15 @@ export default {
         behavior: 'smooth',
       });
     },
-  },
+
+    toLink(s) {
+      var prefix = 'http://';
+      if (s.substr(0, prefix.length) !== prefix)
+        {
+          return s = prefix + s;
+        }
+      }
+    },
 };
 </script>
 
@@ -231,6 +302,23 @@ export default {
   width: 80%;
   margin: 10px auto;
   max-width: 1024px;
+
+  .business-name {
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .dist-name{
+    width: 40%;
+  }
+
+  .dist-address {
+    width: 30%;
+  }
+
+  .dist-contact {
+    width: 30%;
+  }
 
   .app-pages {
     display: flex;
