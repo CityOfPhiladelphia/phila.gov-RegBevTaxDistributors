@@ -45,17 +45,21 @@
       >
         <thead
           class="center"
-          data-sticky
-          data-top-anchor="filter-results:bottom"
-          data-btm-anchor="page:bottom"
         >
           <tr>
             <th
               class="dist-name"
             >
               <span>Distributor Name</span>
+              <span
+                v-if="isMobile()"
+              >
+                <br>
+                (link to address)
+              </span>
             </th>
             <th
+              v-if="!isMobile()"
               class="dist-address"
             >
               <span>Address</span>
@@ -81,11 +85,33 @@
             :key="distributor.cartodb_id"
           >
             <td
-              class="business-name"
+              class="business-name dist-name"
             >
-              {{ distributor.doing_business_as_name | upperCase }}
+              <span
+                v-if="!isMobile()"
+              >
+                {{ distributor.doing_business_as_name | upperCase }}
+              </span>
+
+              <span
+                v-if="isMobile() && !distributor.street_address"
+              >
+                {{ distributor.doing_business_as_name | upperCase }}
+              </span>
+
+              <a
+                v-if="distributor.street_address && isMobile()"
+                :href="'https://www.google.com/maps/search/?api=1&query=' + distributor.street_address + ' ' + distributor.zip_code"
+                target="_blank"
+                class="external"
+              >
+                {{ distributor.doing_business_as_name | upperCase }}
+              </a>
             </td>
-            <td>
+            <td
+              v-if="!isMobile()"
+              class="dist-address"
+            >
               <a
                 v-if="distributor.street_address"
                 :href="'https://www.google.com/maps/search/?api=1&query=' + distributor.street_address + ' ' + distributor.zip_code"
@@ -97,7 +123,10 @@
                 {{ distributor.zip_code }}
               </a>
             </td>
-            <td>
+
+            <td
+              class="dist-contact"
+            >
               <a
                 :href="'tel:' + distributor.phone_number"
                 class="telephone"
@@ -114,12 +143,22 @@
               <br>
               <!-- culls for email addresses  -->
               <a 
-                v-if="distributor.website !== null && !distributor.website.includes('@')" 
+                v-if="distributor.website !== null && !distributor.website.includes('@') && !isMobile()" 
                 target="_blank" 
                 :href="toLink(distributor.website)"
                 class="external"
               > 
                 {{ toLink(distributor.website) }}
+              </a>
+
+              <a 
+                v-if="distributor.website !== null && !distributor.website.includes('@') && isMobile()" 
+                target="_blank" 
+                :href="toLink(distributor.website)"
+                class="external"
+              > 
+              
+                website
               </a>
             </td>
           </tr>
@@ -134,7 +173,7 @@
           :async="true"
           :limit="3"
           :show-step-links="true"
-          :hide-single-page="false"
+          :hide-single-page="true"
           :step-links="{
             next: 'Next',
             prev: 'Previous'
@@ -149,7 +188,6 @@
 
 import Vue from "vue";
 import axios from "axios";
-import moment from "moment";
 import VuePaginate from "vue-paginate";
 import VueFuse from "vue-fuse";
 
@@ -166,7 +204,7 @@ export default {
   },
   filters: {
     'phoneDisplay' : function(val) {
-      if(val !== null) {
+      if(val) {
         return val.replace(/[^0-9]/g, '')
           .replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
       }
@@ -189,7 +227,7 @@ export default {
       displayPaginate: true,
       search: '',
       searchOptions: {
-        shouldSort: false,
+        shouldSort: true,
         threshold: 0.2,
         keys: [
           "doing_business_as_name",
@@ -275,7 +313,6 @@ export default {
 
     checkEmpty: function() {
       this.emptyResponse = (this.filteredDistributors.length === 0 ? true : false);
-      // this.displayPaginate = (this.filteredDistributors.length >= 50) ? true : false;
     },
     
     scrollToTop : function () {
@@ -290,6 +327,12 @@ export default {
       if (s.substr(0, prefix.length) !== prefix) {
         return s = prefix + s;
       }
+    },
+    isMobile() {
+      if( window.innerWidth <= 760 ) {
+        return true;
+      }
+      return false;
     },
   },
 };
@@ -308,7 +351,7 @@ export default {
   }
 
   .dist-name{
-    width: 40%;
+    min-width: 40%;
   }
 
   .dist-address {
@@ -322,6 +365,32 @@ export default {
   .app-pages {
     display: flex;
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 760px) { 
+
+  #bev-tax-app{
+    width: 95%;
+    
+    .dist-contact {
+      min-width: 40%;
+    }
+    .business-name a {
+      color: black;
+    }
+  }
+
+  .app-pages{
+    display: flex;
+    flex-direction: column-reverse;
+
+    p {
+      margin: 0 auto;
+    }
+    ul {
+      margin: 0 auto;
+    }
   }
 }
 </style>
