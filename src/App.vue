@@ -55,7 +55,7 @@
                 v-if="isMobile()"
               >
                 <br>
-                (link to address)
+                (link to directions)
               </span>
             </th>
             <th
@@ -63,6 +63,7 @@
               class="dist-address"
             >
               <span>Address</span>
+              <span> (directions) </span>
             </th>
             <th
               class="dist-contact"
@@ -98,7 +99,7 @@
               >
                 {{ distributor.doing_business_as_name | upperCase }}
               </span>
-
+              <!-- google maps query for street address + zip code -->
               <a
                 v-if="distributor.street_address && isMobile()"
                 :href="'https://www.google.com/maps/search/?api=1&query=' + distributor.street_address + ' ' + distributor.zip_code"
@@ -123,7 +124,6 @@
                 {{ distributor.zip_code }}
               </a>
             </td>
-
             <td
               class="dist-contact"
             >
@@ -133,9 +133,9 @@
               >
                 {{ distributor.phone_number | phoneDisplay }}
               </a>
-              <!-- check to see if there is an extension -->
+              <!-- check to see if there is a non-zero extension -->
               <span 
-                v-if="distributor.phone_extension !== '0' && distributor.phone_extension "
+                v-if="distributor.phone_extension !== '0' && distributor.phone_extension"
               >
                 <b>ext. {{ distributor.phone_extension }}</b>
               </span>
@@ -150,14 +150,12 @@
               > 
                 {{ toLink(distributor.website) }}
               </a>
-
               <a 
                 v-if="distributor.website !== null && !distributor.website.includes('@') && isMobile()" 
                 target="_blank" 
                 :href="toLink(distributor.website)"
                 class="external"
               > 
-              
                 website
               </a>
             </td>
@@ -178,7 +176,7 @@
             next: 'Next',
             prev: 'Previous'
           }"
-          @change="scrollToTop"
+          @change="scrollToTop()"
         />
       </div>
     </div>
@@ -204,7 +202,7 @@ export default {
   },
   filters: {
     'phoneDisplay' : function(val) {
-      if(val) {
+      if (val) {
         return val.replace(/[^0-9]/g, '')
           .replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
       }
@@ -224,7 +222,6 @@ export default {
       loading : true,
       emptyResponse : false,
       failure : false,
-      displayPaginate: true,
       search: '',
       searchOptions: {
         shouldSort: true,
@@ -266,13 +263,10 @@ export default {
 
             //sort alphabetically
             this.sortedDistributors = this.distributors.sort(function(a, b){
-              if(a.doing_business_as_name.toLowerCase() < b.doing_business_as_name.toLowerCase()) {
-                return -1; 
+              if (a.doing_business_as_name === b.doing_business_as_name) {
+                return 0;
               }
-              if(a.doing_business_as_name.toLowerCase() > b.doing_business_as_name.toLowerCase()) {
-                return 1; 
-              }
-              return 0;
+              return a.doing_business_as_name.toLowerCase().trim() < b.doing_business_as_name.toLowerCase().trim() ? -1 : 1;
             });
 
             this.filteredDistributors = this.sortedDistributors;
@@ -293,12 +287,9 @@ export default {
         this.$search(this.search, this.distributors, this.searchOptions).then(posts => {
           this.filteredDistributors = posts;
         });
-    
       } else {
         this.filteredDistributors = this.sortedDistributors;
-    
       }
-
     },
 
     filter: async function() {
@@ -351,7 +342,7 @@ export default {
   }
 
   .dist-name{
-    min-width: 40%;
+    width: 40%;
   }
 
   .dist-address {
@@ -377,7 +368,7 @@ export default {
       min-width: 40%;
     }
     .business-name a {
-      color: black;
+      color: #444;
     }
   }
 
