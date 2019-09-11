@@ -367,9 +367,7 @@ export default {
     .dist-contact {
       min-width: 40%;
     }
-    .business-name a {
-      color: #444;
-    }
+    
   }
 
   .app-pages{
