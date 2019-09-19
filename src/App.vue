@@ -54,8 +54,6 @@
               <span
                 v-if="isMobile()"
               >
-                <br>
-                (link to directions)
               </span>
             </th>
             <th
@@ -63,7 +61,6 @@
               class="dist-address"
             >
               <span>Address</span>
-              <span> (directions) </span>
             </th>
             <th
               class="dist-contact"
