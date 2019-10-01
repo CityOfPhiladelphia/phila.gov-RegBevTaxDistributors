@@ -14,7 +14,7 @@
         type="submit"
         class="search-submit"
         value="Search"
-        @click="filter()"
+      
       >
     </div>
   
@@ -53,8 +53,7 @@
               <span>Distributor Name</span>
               <span
                 v-if="isMobile()"
-              >
-              </span>
+              />
             </th>
             <th
               v-if="!isMobile()"
@@ -243,7 +242,7 @@ export default {
 
   watch: {
     search: function() {
-      this.filter();
+      // this.filter();
     },
   },
 
@@ -254,7 +253,13 @@ export default {
   methods: {
     getDistributors: function() {
       {
-        axios.get(endpoint+query)
+        axios.get(endpoint+query, {
+          headers: {
+           "Content-Type": 'application/json; charset=utf-8',
+          //  "Cache": "false",
+            
+          },
+        })
           .then(response => {
             this.distributors = response.data.rows;
 

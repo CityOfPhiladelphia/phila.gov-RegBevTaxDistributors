@@ -1,3 +1,7 @@
+
+require("./polyfills/Array.prototype.find.js");
+require("./polyfills/Array.prototype.includes.js");
+import "core-js"
 import Vue from 'vue';
 import App from './App.vue';
 import VueRouter from 'vue-router';
