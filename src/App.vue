@@ -14,7 +14,6 @@
         type="submit"
         class="search-submit"
         value="Search"
-      
       >
     </div>
   
@@ -255,8 +254,8 @@ export default {
       {
         axios.get(endpoint+query, {
           headers: {
-           "Content-Type": 'application/json; charset=utf-8',
-          //  "Cache": "false",
+            "Content-Type": 'application/json; charset=utf-8',
+            //  "Cache": "false",
             
           },
         })
