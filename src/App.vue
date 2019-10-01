@@ -241,7 +241,7 @@ export default {
 
   watch: {
     search: function() {
-      // this.filter();
+      this.filter();
     },
   },
 
