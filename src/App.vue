@@ -14,6 +14,7 @@
         type="submit"
         class="search-submit"
         value="Search"
+        @change="filter()"
       >
     </div>
   
