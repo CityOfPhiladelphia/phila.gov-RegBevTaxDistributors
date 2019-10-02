@@ -14,7 +14,7 @@
         type="submit"
         class="search-submit"
         value="Search"
-        @click="filter()"
+        @change="filter()"
       >
     </div>
   
@@ -53,8 +53,7 @@
               <span>Distributor Name</span>
               <span
                 v-if="isMobile()"
-              >
-              </span>
+              />
             </th>
             <th
               v-if="!isMobile()"
@@ -254,7 +253,13 @@ export default {
   methods: {
     getDistributors: function() {
       {
-        axios.get(endpoint+query)
+        axios.get(endpoint+query, {
+          headers: {
+            "Content-Type": 'application/json; charset=utf-8',
+            //  "Cache": "false",
+            
+          },
+        })
           .then(response => {
             this.distributors = response.data.rows;
 
@@ -290,7 +295,7 @@ export default {
     },
 
     filter: async function() {
-
+      this.loading = true;
       await this.filterSearch();
      
       await this.checkEmpty();
@@ -301,6 +306,7 @@ export default {
 
     checkEmpty: function() {
       this.emptyResponse = (this.filteredDistributors.length === 0 ? true : false);
+      this.loading = false;
     },
     
     scrollToTop : function () {
