@@ -1,4 +1,4 @@
 module.exports = {
   filenameHashing: false,
-  publicPath: "/registered-distributors/staging/",
+  // publicPath: "/registered-distributors/staging/",
 };
