@@ -295,7 +295,7 @@ export default {
     },
 
     filter: async function() {
-
+      this.loading = true;
       await this.filterSearch();
      
       await this.checkEmpty();
@@ -306,6 +306,7 @@ export default {
 
     checkEmpty: function() {
       this.emptyResponse = (this.filteredDistributors.length === 0 ? true : false);
+      this.loading = false;
     },
     
     scrollToTop : function () {
