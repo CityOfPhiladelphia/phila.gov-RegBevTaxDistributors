@@ -1,6 +1,7 @@
-require("./polyfills/Array.prototype.find.js");
-require("./polyfills/Array.prototype.includes.js");
-require("./polyfills/String.prototype.includes.js");
+
+import BrowserSupport from  "./browser-support.js";
+BrowserSupport.isIE();
+
 import Vue from 'vue';
 import App from './App.vue';
 import VueRouter from 'vue-router';
